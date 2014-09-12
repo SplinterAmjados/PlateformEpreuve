@@ -1,0 +1,104 @@
+<script language="javascript">
+function validate(id,url)
+{
+
+$('#zoneResult').html("");
+$.ajax( {
+		type : "POST",
+        url : url , 
+        data : $('#epreuve_'+id+'_flag').serialize() ,
+        dataType : "json",
+        success : function(data)
+            {
+      
+               if (data.redirection)
+               {
+                   $(location).attr('href',data.url);
+               }
+               else
+               {
+                   if (data.validate)
+                   {
+                       $('#zoneResult').html("This Task is validated");
+                   }
+                   else
+                   {
+            	   if ( data.result )
+            	   { 
+            		   $('#zoneResult').html("Good ! Right Flag") ;
+            		   $.ajax( {
+           				type : "GET",
+           			    url : "{{ path('getTasks') }}" , 
+           			    success : function(data1)
+           			        {
+           			        $('#mainBoxDiv').html(data1);
+           			        },
+           		            error : function(xhr2,options2,erorrs2)
+           		            {
+           							if (xhr2.status == 403 ) alert("Your query was banned : code 403") ;
+           							else alert("An error has occurred");
+           		            }
+           			});
+           			$.ajax( {
+        				type : "GET",
+        			    url : "{{ path('challengerInfo') }}" , 
+        			    success : function(data1)
+        			        {
+        			        $('#infoChallengerDiv').html(data1);
+        			        },
+        		            error : function(xhr1,options1,erorrs1)
+        		            {
+        							if (xhr1.status == 403 ) alert("Your query was banned : code 403") ;
+        							else alert("An error has occurred");
+        		            }
+        			});
+            	   }
+                   else
+                   {
+                       if ( data.bonus )
+                       {
+                    	   $('#zoneResult').html(data.message);
+                       }else {if (data.disabled )
+                       {
+                    	   $('#zoneResult').html(data.message);
+                        }
+                       else
+                       {
+                    	   $('#zoneResult').html("Wrong Flag !! \nPlease wait for 5 seconds before validating again, otherwise your account will be disable "); 
+                       }
+                       }
+                   } 
+                   }
+               }
+            },
+            error : function(xhr,options,erorrs)
+            {
+					if (xhr.status == 403 ) alert("Your query was banned : code 403") ;
+					else alert("An error has occurred");
+            }
+      }
+	);
+}
+
+</script>
+
+
+<center>
+{% if epreuve != null  %}
+<font size="7">{{ epreuve.name }}</font><br>
+{{ epreuve.type }}<br><br>
+ {{ epreuve.points }} points <br><br>
+ Hint : {{ epreuve.description }} <br>
+ url : {{ epreuve.ip }}{{ epreuve.url }}<br><br>
+ {%if solved %} This task is validated 
+ {% else %}
+<form method="POST"  id="epreuve_{{ epreuve.id }}_flag">
+<input type="text"  name="flag"  />
+<button type="button" onClick="validate({{ epreuve.id }},'{{ path('validate',{ 'id' : epreuve.id}) }}')"><b>Validate</b></button>
+</form>
+<div id="zoneResult"></div>
+ {% endif %}
+ {% else %}
+ Problem , please try again !!
+ {% endif %}
+</center>
